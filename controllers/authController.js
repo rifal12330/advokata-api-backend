@@ -1,46 +1,37 @@
-const { validationResult } = require('express-validator');
-const bcrypt = require('bcrypt');
-const User = require('../models/User'); // Sesuaikan dengan model User Anda
+const { body, validationResult } = require('express-validator');
 
-// Fungsi untuk menangani registrasi
+// Validasi input untuk registrasi
+const registerValidation = [
+  body('email').isEmail().withMessage('Invalid email format'),
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+];
+
+// Validasi input untuk login
+const loginValidation = [
+  body('email').isEmail().withMessage('Invalid email format'),
+  body('password').notEmpty().withMessage('Password is required'),
+];
+
+// Controller registrasi
 const registerUser = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { name, email, password } = req.body;
-
-  try {
-    // Cek apakah email sudah terdaftar
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already exists' });
-    }
-
-    // Enkripsi password sebelum menyimpannya
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Simpan pengguna baru
-    const newUser = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
-    // Return response sukses
-    res.status(201).json({
-      message: 'User registered successfully',
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-      },
-    });
-  } catch (error) {
-    console.error('Error during user registration:', error.message);
-    res.status(500).json({ message: 'Error registering user', error: error.message });
-  }
+  // Logika registrasi...
 };
 
-module.exports = { registerUser };
+// Controller login
+const loginUser = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  // Logika login...
+};
+
+module.exports = { registerUser, loginUser, registerValidation, loginValidation };

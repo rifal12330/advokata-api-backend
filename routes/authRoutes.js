@@ -1,47 +1,32 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/userModel'); // Pastikan model ini benar
+const User = require('../models/userModel'); // Make sure this model is properly defined
 const router = express.Router();
 
 // Registrasi Pengguna Baru
 router.post('/register', async (req, res) => {
-    const { name, email, password } = req.body;
+    const { email, password } = req.body;
 
     try {
-        // Validasi input
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        // Debugging untuk request body
-        console.log('Request Body:', req.body);
-
         // Cek apakah email sudah terdaftar
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
             return res.status(400).json({ message: 'Email already exists' });
         }
 
-        // Simpan pengguna baru
-        const newUser = await User.create({ name, email, password });
+        // Hash password sebelum disimpan
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Jangan mengembalikan password ke client
-        const { id, name: userName, email: userEmail } = newUser;
+        // Simpan pengguna baru dengan password yang sudah di-hash
+        const newUser = await User.create({ email, password: hashedPassword });
 
-        res.status(201).json({
-            message: 'User registered successfully',
-            user: { id, userName, userEmail },
-        });
+        res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
-        console.error('Error registering user:', error);
-        res.status(500).json({
-            message: 'Error registering user',
-            error: error.message,
-        });
+        console.error(error);
+        res.status(500).json({ message: 'Error registering user' });
     }
 });
-
 
 // Login Pengguna
 router.post('/login', async (req, res) => {
